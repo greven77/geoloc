@@ -2,13 +2,13 @@ require 'nokogiri'
 require 'open-uri'
 require 'json'
 
-BASE_URL = "http://dialcode.org/"
+BASE_URL = "http://dialcode.org"
 
 ROOT_PAGE = Nokogiri::HTML(open(BASE_URL))
 dial_codes = {}
 
 def normalize_text(text)
-  text.downcase.strip
+  text.downcase.strip.gsub(/\u00a0/, '')
 end
 
 def scrape_countries(root_page)
@@ -44,6 +44,7 @@ def scrape_locations(page, container = {})
   rows = page.css('.main .ltopmenu2')
   rows.each do |row|
     row.css("ul li a").each do |a|
+      puts a['href']
       secondary_page = Nokogiri::HTML(open(BASE_URL + a['href']))
       link_text = normalize_text(a.text)
       yield(container,link_text, secondary_page)
