@@ -45,7 +45,7 @@ def scrape_locations(page, container = {})
   rows.each do |row|
     row.css("ul li a").each do |a|
       secondary_page = Nokogiri::HTML(open(BASE_URL + a['href']))
-      link_text = a.text
+      link_text = normalize_text(a.text)
       yield(container,link_text, secondary_page)
     end
   end
