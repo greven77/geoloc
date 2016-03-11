@@ -25,7 +25,7 @@ end
 def scrape_cities(page)
   cities = {}
   country_rows = page.css("table tr")
-   country_rows[1..-2].each do |country_row|
+   country_rows[1..-1].each do |country_row|
      city = normalize_text(country_row.css("td")[0].text)
      cities[city] = {}
      cities[city]["name"] = normalize_text(country_row.css("td")[0].text)
