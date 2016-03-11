@@ -1,14 +1,20 @@
 require 'nokogiri'
 require 'open-uri'
+require 'json'
 
 BASE_URL = "http://dialcode.org/"
 
-root_page = Nokogiri::HTML(open(BASE_URL))
+ROOT_PAGE = Nokogiri::HTML(open(BASE_URL))
 dial_codes = {}
+
+def normalize_text(text)
+  text.downcase.strip
+end
 
 def scrape_countries(root_page)
   scrape_locations(root_page) do |dial_codes, country, page|
-    if ["united states", "canada"].contains?(country.downcase)
+    country = normalize_text(country)
+    if ["united states", "canada"].include?(country)
       dial_codes[country] = scrape_states(page)
     else
       dial_codes[country] = scrape_cities(page)
@@ -20,10 +26,10 @@ def scrape_cities(page)
   cities = {}
   country_rows = page.css("table tr")
    country_rows[1..-2].each do |country_row|
-     city = country_row.css("td")[0].downcase
+     city = normalize_text(country_row.css("td")[0].text)
      cities[city] = {}
-     cities[city]["name"] = country_row.css("td")[0]
-     cities[city]["area_code"] = country_row.css("td")[1]
+     cities[city]["name"] = normalize_text(country_row.css("td")[0].text)
+     cities[city]["area_code"] = country_row.css("td")[1].text
    end
    cities
 end
@@ -37,7 +43,7 @@ end
 def scrape_locations(page, container = {})
   rows = page.css('.main .ltopmenu2')
   rows.each do |row|
-    row.css("ul li a") do |a|
+    row.css("ul li a").each do |a|
       secondary_page = Nokogiri::HTML(open(BASE_URL + a['href']))
       link_text = a.text
       yield(container,link_text, secondary_page)
@@ -45,3 +51,10 @@ def scrape_locations(page, container = {})
   end
   container
 end
+
+DIAL_CODES = scrape_countries(ROOT_PAGE)
+#test the methods keeping all data in a .json file
+File.open("temp.json","w") do |f|
+  f.write(DIAL_CODES.to_json)
+end
+
